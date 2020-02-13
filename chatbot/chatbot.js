@@ -18,7 +18,7 @@ const sessionPath = sessionClient.sessionPath(
 );
 
 const chatQuery = {
-  textQuey: async (text, parameters = {}) => {
+  textQuery: async (text, parameters = {}) => {
     let self = chatQuery;
     const request = {
       session: sessionPath,
@@ -41,7 +41,7 @@ const chatQuery = {
     responses = await self.handleAction(responses);
     return responses;
   },
-  eventQuey: async (event, parameters = {}) => {
+  eventQuery: async (event, parameters = {}) => {
     let self = chatQuery;
     const request = {
       session: sessionPath,

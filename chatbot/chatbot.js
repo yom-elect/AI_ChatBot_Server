@@ -8,7 +8,7 @@ const projectID = config.googleProjectID;
 
 const credentials = {
   client_email: config.googleClientEmail,
-  private_Key: config.googlePrivateKey
+  private_key: config.googlePrivateKey
 };
 
 const sessionClient = new dialogflow.SessionsClient({ projectID, credentials });

@@ -6,6 +6,7 @@ const logger = require("morgan");
 
 const routes = require("./routes");
 const bodyParser = require("body-parser");
+const mongooseConnect = require("./util/database").mongooseConnect;
 
 const app = express();
 
@@ -20,6 +21,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,GET,PUT");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  next();
+});
+
 app.use(routes);
 
 // catch 404 and forward to error handler
@@ -27,6 +35,8 @@ app.use(function(req, res, next) {
   next(createError(404));
 });
 
+// connect database
+mongooseConnect();
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development

@@ -10,15 +10,17 @@ const credentials = {
   client_email: config.googleClientEmail,
   private_key: config.googlePrivateKey
 };
+const Registration = require("../models/Registration");
+const registerIndividual = require("../models/RegisterIndividual");
 
 const sessionClient = new dialogflow.SessionsClient({ projectID, credentials });
-const sessionPath = sessionClient.sessionPath(
-  config.googleProjectID,
-  sessionId
-);
 
 const chatQuery = {
-  textQuery: async (text, parameters = {}) => {
+  textQuery: async (text, userID, parameters = {}) => {
+    let sessionPath = sessionClient.sessionPath(
+      config.googleProjectID,
+      sessionId + userID
+    );
     let self = chatQuery;
     const request = {
       session: sessionPath,
@@ -41,7 +43,11 @@ const chatQuery = {
     responses = await self.handleAction(responses);
     return responses;
   },
-  eventQuery: async (event, parameters = {}) => {
+  eventQuery: async (event, userID, parameters = {}) => {
+    let sessionPath = sessionClient.sessionPath(
+      config.googleProjectID,
+      sessionId + userID
+    );
     let self = chatQuery;
     const request = {
       session: sessionPath,
@@ -61,8 +67,61 @@ const chatQuery = {
     return responses;
   },
   handleAction: responses => {
+    let self = chatQuery;
+    let queryResult = responses[0].queryResult;
+
+    switch (queryResult.action) {
+      case "recommendproducts-yes":
+        if (queryResult.allRequiredParamsPresent) {
+          self.saveRegistration(queryResult.parameters.fields);
+        }
+        break;
+      // case "individual_details":
+      //   if (queryResult.allRequiredParamsPresent) {
+      //     self.registerIndividualTaxPayer(queryResult.parameters.fields);
+      //   }
+      //   break;
+    }
     return responses;
+  },
+
+  saveRegistration: async fields => {
+    const registration = new Registration({
+      name: fields.name.stringValue,
+      address: fields.address.stringValue,
+      phone: fields.phone.stringValue,
+      email: fields.email.stringValue,
+      dateSent: Date.now()
+    });
+    try {
+      let reg = await registration.save();
+      console.log(reg);
+    } catch (err) {
+      console.log(err);
+    }
   }
+
+  // registerIndividualTaxPayer: async fields => {
+  //   const payload = {
+  //     SURNAME: fields.Surname.stringValue,
+  //     FIRSTNAME: fields.Surname.stringValue,
+  //     MIDDLENAME: fields.Surname.stringValue,
+  //     DATEOFBIRTH: fields.Surname.stringValue,
+  //     UserName: fields.Surname.stringValue,
+  //     EMAILADDRESS: fields.Surname.stringValue,
+  //     PHONENO: fields.Surname.stringValue
+  //   };
+  //   try {
+  //     const feedback = await registerIndividual(
+  //       payload,
+  //       "Individual",
+  //       (auth = true)
+  //     );
+  //     console.log(feedback);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
 };
 
 module.exports = chatQuery;

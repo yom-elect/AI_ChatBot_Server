@@ -35,18 +35,18 @@ router.post("/", async (req, res, next) => {
     const email = agent.parameters.Username;
     try {
       const feedback = await validateUser(email);
-      if (feedback.Success) {
+      if (feedback.Success && feedback) {
         console.log(feedback.responseDescription);
         let responseText = feedback.responseDescription.slice(0, -5);
         let input = "Please enter your token";
         agent.add(responseText);
         agent.add(input);
       } else {
-        let responseText = `Something Went Wrong Please Try again Later`;
-        agent.add(responseText);
+        throw new Error();
       }
     } catch (err) {
-      console.log(err);
+      let responseText = `Something Went Wrong Please Try again Later`;
+      agent.add(responseText);
     }
   };
   const validateToken = async agent => {
@@ -58,7 +58,9 @@ router.post("/", async (req, res, next) => {
       tokenValue: JSON.stringify(token)
     };
     try {
+      console.log(payload);
       const feedback = await validateUserToken(payload);
+      console.log(feedback);
       if (feedback.Success) {
         await localStorage.setItem("authToken", JSON.stringify(feedback.token));
         console.log(localStorage.getItem("authToken"));
@@ -68,11 +70,11 @@ router.post("/", async (req, res, next) => {
         agent.add(new Suggestion("Informal"));
         agent.add(new Suggestion("PAYEE"));
       } else {
-        let responseText = `Something Went Wrong Please Try again Later`;
-        agent.add(responseText);
+        throw new Error();
       }
     } catch (err) {
-      console.log(err);
+      let responseText = `Something Went Wrong Please Try again Later`;
+      agent.add(responseText);
     }
   };
 
@@ -83,7 +85,7 @@ router.post("/", async (req, res, next) => {
       FIRSTNAME: fields.Firstname,
       MIDDLENAME: fields.Middlename,
       DATEOFBIRTH: fields.Birth.slice(0, 10),
-      UserName: fields.UserName,
+      UserName: fields.Username,
       EMAILADDRESS: fields.Email,
       PHONENO: fields.Phone,
       Password: "SoftAlliance#1",
@@ -97,10 +99,16 @@ router.post("/", async (req, res, next) => {
         (auth = true)
       );
       console.log(feedback);
-      let responseText = `still waiting for server`;
-      agent.add(responseText);
+      if (feedback.Success) {
+        let responseText = `Done!!, ${fields.Surname} ${fields.Firstname} has bee successfully  registered.`;
+        agent.add(responseText);
+      } else {
+        throw new Error();
+      }
     } catch (err) {
       console.log(err);
+      let responseText = `Something Went Wrong Please Try again Later`;
+      agent.add(responseText);
     }
   };
 
@@ -121,11 +129,16 @@ router.post("/", async (req, res, next) => {
         "Corporate",
         (auth = true)
       );
-      console.log(feedback);
-      let responseText = `still waiting for server`;
-      agent.add(responseText);
+      if (feedback.Success) {
+        let responseText = `Done!!, ${fields.CorporateName} has bee successfully  registered.`;
+        agent.add(responseText);
+      } else {
+        throw new Error();
+      }
     } catch (err) {
       console.log(err);
+      let responseText = `Something Went Wrong Please Try again Later`;
+      agent.add(responseText);
     }
   };
 

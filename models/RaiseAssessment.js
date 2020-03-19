@@ -4,7 +4,6 @@ const validateUser = async username => {
   try {
     url = "http://192.168.200.38/api/AuthToken/createToken";
     const response = await axios.post(url, { username: username });
-    console.log(response);
     const resData = response.data;
     return resData;
   } catch (err) {

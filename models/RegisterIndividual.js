@@ -8,9 +8,11 @@ const registerTaxPayer = async (payload, type, auth) => {
 
       let url = "";
       if (type === "Individual") {
-        url = "http://192.168.200.38/mobile/auth/RegisterIndividualTaxPayer"; //config.url.individualRegister;
+        url =
+          "http://softtax.softalliance.com/mobile/auth/RegisterIndividualTaxPayer"; //config.url.individualRegister;
       } else {
-        url = "http://192.168.200.38/mobile/auth/RegisterCorporateTaxPayer"; //config.url.corporateRegister;
+        url =
+          "http://softtax.softalliance.com/mobile/auth/RegisterCorporateTaxPayer"; //config.url.corporateRegister;
         //payload["USERID"] = userId;
       }
       const response = await axios.post(url, payload);

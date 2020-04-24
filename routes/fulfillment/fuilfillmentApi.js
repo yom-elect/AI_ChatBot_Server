@@ -4,20 +4,23 @@ const express = require("express");
 const router = express.Router();
 const Product = require("./../../models/Products");
 const registerTaxpayer = require("../../models/RegisterIndividual");
+const searchTaxPayer = require("../../models/SearchTaxPayer");
 const {
   validateUser,
-  validateUserToken
+  validateUserToken,
 } = require("../../models/RaiseAssessment");
 
 const localStorage = new LocalStorage("./scratch");
 
-router.get("/", function(req, res, next) {
+const token = localStorage.getItem("authToken");
+
+router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
 });
 
 router.post("/", async (req, res, next) => {
   const agent = new WebhookClient({ request: req, response: res });
-  const searchProduct = agent => {
+  const searchProduct = (agent) => {
     Product.findOne({ product: agent.parameters.products }, (err, product) => {
       if (product !== null) {
         product.counter++;
@@ -31,7 +34,7 @@ router.post("/", async (req, res, next) => {
     agent.add(responseText);
     agent.add(new Suggestion("tell me more"));
   };
-  const validateEmail = async agent => {
+  const validateEmail = async (agent) => {
     const email = agent.parameters.Username;
     try {
       const feedback = await validateUser(email);
@@ -49,16 +52,15 @@ router.post("/", async (req, res, next) => {
       agent.add(responseText);
     }
   };
-  const validateToken = async agent => {
+  const validateToken = async (agent) => {
     const email =
       agent.context.inputContexts.individual_username.parameters.Username;
     const token = agent.parameters.token;
     payload = {
       username: email,
-      tokenValue: JSON.stringify(token)
+      tokenValue: JSON.stringify(token),
     };
     try {
-      console.log(payload);
       const feedback = await validateUserToken(payload);
       console.log(feedback);
       if (feedback.Success) {
@@ -78,7 +80,25 @@ router.post("/", async (req, res, next) => {
     }
   };
 
-  const registerIndividualTaxPayer = async agent => {
+  const searchIndividualTaxPayer = async (agent) => {
+    const payload = {
+      searchKey: "surname",
+      surname: agent.parameters.Surname,
+    };
+    try {
+      const feedback = await searchTaxPayer(payload, "individual", token);
+      if (feedback.Success) {
+        feedback.data.forEach((element) => {
+          agent.add(new Suggestion(element.SURNAME));
+        });
+      } else {
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const registerIndividualTaxPayer = async (agent) => {
     const fields = agent.parameters;
     const payload = {
       SURNAME: fields.Surname,
@@ -90,7 +110,7 @@ router.post("/", async (req, res, next) => {
       PHONENO: fields.Phone,
       Password: "SoftAlliance#1",
       ConfirmPassword: "SoftAlliance#1",
-      TAXOFFICE: 108
+      TAXOFFICE: 108,
     };
     try {
       const feedback = await registerTaxpayer(
@@ -98,12 +118,12 @@ router.post("/", async (req, res, next) => {
         "Individual",
         (auth = true)
       );
-      console.log(feedback);
       if (feedback.Success) {
-        let responseText = `Done!!, ${fields.Surname} ${fields.Firstname} has bee successfully  registered.`;
+        let responseText = `Done!!, ${fields.Surname} ${fields.Firstname} has bee successfully  registered Online.`;
         agent.add(responseText);
       } else {
-        throw new Error();
+        let responseText = `Something Went Wrong Please Try again Later`;
+        agent.add(responseText);
       }
     } catch (err) {
       console.log(err);
@@ -112,7 +132,7 @@ router.post("/", async (req, res, next) => {
     }
   };
 
-  const registerCorporateTaxPayer = async agent => {
+  const registerCorporateTaxPayer = async (agent) => {
     const fields = agent.parameters;
     const payload = {
       CORPORATENAME: fields.CorporateName,
@@ -121,7 +141,7 @@ router.post("/", async (req, res, next) => {
       EFFECTIVEDATE: fields.EffectiveDate.slice(0, 10),
       RCNUMBER: fields.RcNumber,
       EMAILADDRESS: fields.Email,
-      APP_USERID: 45
+      APP_USERID: 45,
     };
     try {
       const feedback = await registerTaxpayer(
@@ -133,7 +153,8 @@ router.post("/", async (req, res, next) => {
         let responseText = `Done!!, ${fields.CorporateName} has bee successfully  registered.`;
         agent.add(responseText);
       } else {
-        throw new Error();
+        let responseText = `Something Went Wrong Please Try again Later`;
+        agent.add(responseText);
       }
     } catch (err) {
       console.log(err);
@@ -142,7 +163,7 @@ router.post("/", async (req, res, next) => {
     }
   };
 
-  const fallback = agent => {
+  const fallback = (agent) => {
     agent.add("I didnt Understand");
     agent.add("I'm sorry, can you try again");
   };
@@ -154,6 +175,10 @@ router.post("/", async (req, res, next) => {
   intentMap.set("corporate-registration-details", registerCorporateTaxPayer);
   intentMap.set("individual-assessment-user", validateEmail);
   intentMap.set("individual-assessment-token", validateToken);
+  intentMap.set(
+    "Individual-Informal-assessment-search",
+    searchIndividualTaxPayer
+  );
   agent.handleRequest(intentMap);
 });
 
